@@ -24,6 +24,7 @@ uint32_t process_frame(FILE* in, FILE* out) {
     uint32_t data_size;
     uchar tag_type;
     uint8_t data_size_bi[3];
+    static long frame_num = 0;
 
     fread(&tag_type, 1, 1, in);
   
@@ -51,8 +52,9 @@ uint32_t process_frame(FILE* in, FILE* out) {
 
 void* process_stream() {
     //stream = popen("ffmpeg -i dvgrab_dv1.avi -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
-    //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
-    stream = popen("cat example.flv", "r");
+  //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
+    stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2>/dev/null", "r");
+  //    stream = popen("cat example.flv", "r");
     output = fopen("output.flv", "w");
 
     frame = malloc(max_frame_size);
@@ -87,7 +89,7 @@ void* process_stream() {
             fwrite(&prev, 4, 1, output);
             free(cuepoint);
             cuepoint=0;
-            printf("Injected cuepoint in stream\n");
+	    printf("Injected cuepoint in stream\n");
         }
         pthread_mutex_unlock(&cuepoint_mutex);
     }
@@ -112,7 +114,6 @@ void cuecumber_cleanup() {
 /* Kills worker thread and cleans up */
 void cuecumber_stop() {
     pthread_cancel(pth);
-    cuecumber_cleanup();
     printf("Stopped worker thread\n");
 }
 
