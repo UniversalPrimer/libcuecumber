@@ -1,0 +1,18 @@
+LICENCE: GPLv3
+LICENCE DOCUMENTATION: Creative Commons, Attribution, Share-alike 3.0 Unported
+
+The purpose of this library is to transcode video files to the FLV
+container format and inject scriptobject cuepoints into the stream.
+
+To obtain the FLV standard specification, please visit:
+http://www.adobe.com/devnet/f4v.html
+
+# Installation
+
+In it's current version, the library calls ffmpeg to transcode a video
+stream.
+
+Packages needed:
+
+pyconstruct
+ffmpeg
