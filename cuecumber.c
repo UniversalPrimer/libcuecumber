@@ -52,7 +52,7 @@ uint32_t process_frame(FILE* in, FILE* out) {
 void* process_stream() {
     //stream = popen("ffmpeg -i dvgrab_dv1.avi -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
     //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
-    stream = popen("cat no_cuepoints.flv", "r");
+    stream = popen("cat example.flv", "r");
     output = fopen("output.flv", "w");
 
     frame = malloc(max_frame_size);
@@ -66,6 +66,9 @@ void* process_stream() {
      // First PrevTagSize (always 0)
     fread(&prev, 4, 1, stream);
     fwrite(&prev, 4, 1, output);
+    process_frame(stream, output); // Process first frame
+
+    pthread_mutex_unlock(&cuepoint_mutex); // Now we can start injecting cuepoints
 
     int bytes_read, i = 0;
     for(;;) {
@@ -80,6 +83,8 @@ void* process_stream() {
         pthread_mutex_lock(&cuepoint_mutex);
         if(cuepoint != 0) {
             fwrite(cuepoint, cuepoint_size, 1, output);
+            prev = htonl(cuepoint_size);
+            fwrite(&prev, 4, 1, output);
             free(cuepoint);
             cuepoint=0;
             printf("Injected cuepoint in stream\n");
@@ -91,7 +96,8 @@ void* process_stream() {
 /* Creates worker thread. */
 void cuecumber_init() {
     cuepoint = 0;
-    pthread_mutex_init(&cuepoint_mutex, NULL);    
+    pthread_mutex_init(&cuepoint_mutex, NULL);
+    pthread_mutex_lock(&cuepoint_mutex); // Prevents injection of cuepoints in the beginning of file
 	pthread_create(&pth,NULL,process_stream,"Init...");
     printf("Starting worker thread\n");
 }

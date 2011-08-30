@@ -82,13 +82,17 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
  * the stream. Created for testing purposes. */
 void cuepoint_test() {
     FILE* cuepoint_file = fopen("cuepoint_gen.raw", "r");
-    int cuepoint_size = 135;
+
+    fseek(cuepoint_file, 0, SEEK_END);
+    int cuepoint_size = ftell(cuepoint_file);
     void* cuepoint = malloc(cuepoint_size);
+    rewind(cuepoint_file);
+
     fread(cuepoint, cuepoint_size, 1, cuepoint_file);
     fclose(cuepoint_file);
 
     cuecumber_init();
-    sleep(1);
+//    sleep(1);
     insert_cuepoint(cuepoint_size, cuepoint);
     cuecumber_exit();
     printf("\nDone\n");

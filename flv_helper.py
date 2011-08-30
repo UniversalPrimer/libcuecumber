@@ -96,10 +96,11 @@ def cuecumber_insert():
 
     f = open('cuepoint_gen.raw', 'w')
     f.write(ftt)
-    f.write(UBInt32("").build(prevsize))
 
     libcuecumber = cdll.LoadLibrary("./libcuecumber.so")
+    libcuecumber.cuecumber_init()
     libcuecumber.insert_cuepoint(prevsize, ftt)
+    libcuecumber.cuecumber_exit()
 
 #read_cue('cuepoints.flv')
 cuecumber_insert()
