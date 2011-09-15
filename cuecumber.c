@@ -4,6 +4,11 @@
 #include <string.h> // strlen
 #include <netinet/in.h> // hton, ntoh
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
+
 #include "cuecumber.h"
 
 // Variables used for communication between threads
@@ -19,7 +24,7 @@ uint32_t cuepoint_size;
 int max_frame_size = 100000;
 void* frame;
 
-uint32_t process_frame(FILE* in, FILE* out) {
+uint32_t process_frame(FILE* in, int out) {
     size_t count;
     uint32_t data_size;
     uchar tag_type;
@@ -43,31 +48,70 @@ uint32_t process_frame(FILE* in, FILE* out) {
     
     fread(frame, data_size, 1, in);
 
-    fwrite(&tag_type, 1, 1, out);
-    fwrite(&data_size_bi, 3, 1, out);
-    fwrite(frame, data_size, 1, out);
+    write(&tag_type, 1, out);
+    write(&data_size_bi, 3, out);
+    write(frame, data_size, out);
 
     return data_size;
 }
 
+void error(const char *msg)
+{
+  perror(msg);
+  exit(0);
+}
+
+int setup_stream(char* servername, int portno) {
+  int sockfd, n;
+  struct sockaddr_in serv_addr;
+  struct hostent *server;
+
+  char buffer[256];
+
+
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd < 0) 
+    error("ERROR opening socket");
+  server = gethostbyname(servername);
+  if (server == NULL) {
+    fprintf(stderr,"ERROR, no such host\n");
+    exit(0);
+  }
+
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+
+  bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr,
+	server->h_length);
+
+  //serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+  serv_addr.sin_port = htons(portno);
+  if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
+    error("ERROR connecting");
+
+  return sockfd;
+}
+
 void* process_stream() {
-    //stream = popen("ffmpeg -i dvgrab_dv1.avi -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
+  //stream = popen("ffmpeg -i dvgrab_dv1.avi -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
   //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
-    stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2>/dev/null", "r");
-  //    stream = popen("cat example.flv", "r");
-    output = fopen("output.flv", "w");
+  //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2>/dev/null", "r");
+    stream = popen("dvgrab -buffers 5 - | ffmpeg -i - -y  -acodec libmp3lame -ar 44100 -vcodec libx264 -s hd480 -b 200k -f flv - 2> /dev/null", "r");
+    int output = setup_stream("localhost", 4444);
 
     frame = malloc(max_frame_size);
 
     void* head = malloc(sizeof(struct flv_header));
     fread(head, sizeof(struct flv_header), 1, stream);
-    fwrite(head, sizeof(struct flv_header), 1, output);
+    write(head, sizeof(struct flv_header), output);
     free(head);
     
-    uint32_t prev;
      // First PrevTagSize (always 0)
+    uint32_t prev;
     fread(&prev, 4, 1, stream);
-    fwrite(&prev, 4, 1, output);
+    write(&prev, 4, output);
+
     process_frame(stream, output); // Process first frame
 
     pthread_mutex_unlock(&cuepoint_mutex); // Now we can start injecting cuepoints
@@ -80,13 +124,13 @@ void* process_stream() {
             return;
         }
         
-        if(feof(stream)) { return; } // TODO Doesn't work
+        if(feof(stream)) { return; }
 
         pthread_mutex_lock(&cuepoint_mutex);
         if(cuepoint != 0) {
-            fwrite(cuepoint, cuepoint_size, 1, output);
+            write(cuepoint, cuepoint_size, output);
             prev = htonl(cuepoint_size);
-            fwrite(&prev, 4, 1, output);
+            write(&prev, 4, output);
             free(cuepoint);
             cuepoint=0;
 	    printf("Injected cuepoint in stream\n");
@@ -100,12 +144,12 @@ void cuecumber_init() {
     cuepoint = 0;
     pthread_mutex_init(&cuepoint_mutex, NULL);
     pthread_mutex_lock(&cuepoint_mutex); // Prevents injection of cuepoints in the beginning of file
-	pthread_create(&pth,NULL,process_stream,"Init...");
+    pthread_create(&pth,NULL,process_stream,"Init...");
     printf("Starting worker thread\n");
 }
 
 void cuecumber_cleanup() {
-    fclose(output);
+  //    fclose(output); // Might want to clean up socket here
     pclose(stream);
     free(frame);
     pthread_mutex_destroy(&cuepoint_mutex);
