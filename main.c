@@ -92,8 +92,16 @@ void cuepoint_test() {
     fclose(cuepoint_file);
 
     cuecumber_init();
-//    sleep(1);
-    insert_cuepoint(cuepoint_size, cuepoint);
+    
+    //sleep(3);
+
+    /* int i; */
+    /* for(i=0; i < 5; i++) { */
+    /*   sleep(5); */
+    /*   insert_cuepoint(cuepoint_size, cuepoint); */
+    /* } */
+    sleep(120);
+    cuecumber_stop();
     cuecumber_exit();
     printf("\nDone\n");
 }
