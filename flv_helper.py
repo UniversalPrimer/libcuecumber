@@ -102,5 +102,41 @@ def cuecumber_insert():
     libcuecumber.insert_cuepoint(prevsize, ftt)
     libcuecumber.cuecumber_exit()
 
+
+### Emcee function wrappers
+
+def cuecumber_startstream():
+    global libcuecumber
+    libcuecumber = cdll.LoadLibrary("./libcuecumber.so")
+    libcuecumber.cuecumber_init()
+
+def cuecumber_stopstream():
+    libcuecumber.cuecumber_exit()
+
+
+def cuecumber_changeslide(slide_number):
+    sd = cuecumber_generate_slidecuepoint(slide_number)
+    ft = flvtag_create(0, sd)
+    prevsize = so_fixsize(ft)
+    ftt = flv_tag.build(ft)
+
+    libcuecumber.insert_cuepoint(prevsize, ftt)
+
+def cuecumber_generate_slidecuepoint(slide_number):
+    sd = scriptdata_create("onCuePoint")
+
+    scriptdata_addpropstr(sd, "name", "Mysecondcuepoint")
+    scriptdata_addpropnum(sd, "time", 0)
+    scriptdata_addpropnum(sd, "slide", slide_number)
+    scriptdata_addpropstr(sd, "type", "navigation")
+    par1 = scriptdata_propstr("lights", "beginning") 
+   
+    arr = scriptdata_proparr("parameters")
+    scriptdata_arradd(arr, par1)
+    scriptdata_addproparr(sd, "parameters", arr)
+
+    return sd
+
+
 #read_cue('cuepoints.flv')
-cuecumber_insert()
+#cuecumber_insert()
