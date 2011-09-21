@@ -107,10 +107,11 @@ def cuecumber_insert():
 
 def cuecumber_startstream():
     global libcuecumber
-    libcuecumber = cdll.LoadLibrary("./libcuecumber.so")
+    libcuecumber = cdll.LoadLibrary("./libcuecumber/libcuecumber.so")
     libcuecumber.cuecumber_init()
 
 def cuecumber_stopstream():
+    libcuecumber.cuecumber_stop();
     libcuecumber.cuecumber_exit()
 
 

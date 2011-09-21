@@ -102,7 +102,7 @@ void* process_stream() {
   //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
   //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2>/dev/null", "r");
   //    stream = popen("dvgrab -buffers 5 - | ffmpeg -i - -y  -acodec libmp3lame -ar 44100 -vcodec libx264 -s hd480 -b 200k -f flv - 2> /dev/null", "r");
-    stream = popen("dvgrab -buffers 5 - | /opt/ffmpeg/bin/ffmpeg -i - -s 320x240 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2> /dev/null", "r");
+    stream = popen("dvgrab -buffers 5 - | /home/stoove/Projects/ffmpeg-dist/ffmpeg/ffmpeg -i - -y -acodec libmp3lame -ar 44100 -vcodec libx264 -s hd480 -b 200k -f flv - 2> /dev/null", "r");
 
     int output = setup_stream("localhost", 6666);
 
