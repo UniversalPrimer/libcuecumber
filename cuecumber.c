@@ -48,9 +48,13 @@ uint32_t process_frame(FILE* in, int out) {
     
     fread(frame, data_size, 1, in);
 
-    write(&tag_type, 1, out);
-    write(&data_size_bi, 3, out);
-    write(frame, data_size, out);
+    // fd, buf, count
+    //    write(&tag_type, 1, out);
+    write(out, &tag_type, 1);
+    //    write(&data_size_bi, 3, out);
+    write(out, &data_size_bi, 3);
+    //    write(frame, data_size, out);
+    write(out, frame, data_size);
 
     return data_size;
 }
@@ -97,20 +101,24 @@ void* process_stream() {
   //stream = popen("ffmpeg -i dvgrab_dv1.avi -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
   //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre medium -f flv - 2>/dev/null", "r");
   //stream = popen("ffmpeg -f video4linux2 -s 320x240 -i /dev/video0 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2>/dev/null", "r");
-    stream = popen("dvgrab -buffers 5 - | ffmpeg -i - -y  -acodec libmp3lame -ar 44100 -vcodec libx264 -s hd480 -b 200k -f flv - 2> /dev/null", "r");
-    int output = setup_stream("localhost", 4444);
+  //    stream = popen("dvgrab -buffers 5 - | ffmpeg -i - -y  -acodec libmp3lame -ar 44100 -vcodec libx264 -s hd480 -b 200k -f flv - 2> /dev/null", "r");
+    stream = popen("dvgrab -buffers 5 - | /opt/ffmpeg/bin/ffmpeg -i - -s 320x240 -y -acodec libmp3lame -ar 44100 -vcodec libx264 -vpre ipod320 -f flv - 2> /dev/null", "r");
+
+    int output = setup_stream("localhost", 6666);
 
     frame = malloc(max_frame_size);
 
     void* head = malloc(sizeof(struct flv_header));
     fread(head, sizeof(struct flv_header), 1, stream);
-    write(head, sizeof(struct flv_header), output);
+    //    write(head, sizeof(struct flv_header), output);
+    write(output, head, sizeof(struct flv_header));
     free(head);
     
      // First PrevTagSize (always 0)
     uint32_t prev;
     fread(&prev, 4, 1, stream);
-    write(&prev, 4, output);
+    write(output, &prev, 4);
+    //    write(&prev, 4, output);
 
     process_frame(stream, output); // Process first frame
 
@@ -128,12 +136,15 @@ void* process_stream() {
 
         pthread_mutex_lock(&cuepoint_mutex);
         if(cuepoint != 0) {
-            write(cuepoint, cuepoint_size, output);
+
+          //            write(cuepoint, cuepoint_size, output);
+            write(output, cuepoint, cuepoint_size);
             prev = htonl(cuepoint_size);
-            write(&prev, 4, output);
+            //            write(&prev, 4, output);
+            write(output, &prev, 4);
             free(cuepoint);
             cuepoint=0;
-	    printf("Injected cuepoint in stream\n");
+            printf("Injected cuepoint in stream\n");
         }
         pthread_mutex_unlock(&cuepoint_mutex);
     }
