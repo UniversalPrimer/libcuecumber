@@ -111,9 +111,8 @@ def cuecumber_startstream():
     libcuecumber.cuecumber_init()
 
 def cuecumber_stopstream():
-    libcuecumber.cuecumber_stop();
+    libcuecumber.cuecumber_stop()
     libcuecumber.cuecumber_exit()
-
 
 def cuecumber_changeslide(slide_number):
     sd = cuecumber_generate_slidecuepoint(slide_number)

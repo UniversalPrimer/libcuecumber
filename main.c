@@ -27,7 +27,6 @@ static struct argp_option options[] = {
 
 struct arguments
 {
-//  char *args[2];                /* arg1 & arg2 */
     int silent, verbose, write;
     char *output_file;
     FILE* in_file;
@@ -37,8 +36,6 @@ struct arguments
 static error_t
 parse_opt (int key, char *arg, struct argp_state *state)
 {
-    /* Get the input argument from argp_parse, which we
-       know is a pointer to our argument structure. */
     struct arguments *arguments = state->input;
   
     switch (key)
@@ -58,17 +55,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
         case 'i':
             arguments->in_file = fopen(arg, "rb+");
             break;
-            /* case ARGP_KEY_ARG: */
-            /*   if (state->arg_num > 1) */
-            /*     /\* Too few arguments. *\/ */
-            /*     argp_usage (state); */
-            /*   arguments->args[state->arg_num] = arg; */
-            /*   break; */
-            /* case ARGP_KEY_END: */
-            /*   if (state->arg_num < 2) */
-            /*     /\* Not enough arguments. *\/ */
-            /*     argp_usage (state); */
-            /*   break; */
      
         default:
             return ARGP_ERR_UNKNOWN;
@@ -88,18 +74,8 @@ void cuepoint_test() {
     void* cuepoint = malloc(cuepoint_size);
     rewind(cuepoint_file);
 
-    fread(cuepoint, cuepoint_size, 1, cuepoint_file);
-    fclose(cuepoint_file);
-
     cuecumber_init();
     
-    //sleep(3);
-
-    /* int i; */
-    /* for(i=0; i < 5; i++) { */
-    /*   sleep(5); */
-    /*   insert_cuepoint(cuepoint_size, cuepoint); */
-    /* } */
     sleep(120);
     cuecumber_stop();
     cuecumber_exit();
